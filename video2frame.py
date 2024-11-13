@@ -51,6 +51,7 @@ def create_frame_extraction_job(input_bucket, input_key, output_bucket, region='
                 },
                 "FileInput": f"s3://{input_bucket}/{input_key}"
             }],
+            "FollowSource": 1,
             "OutputGroups": [
                 # Frame Capture Output Group
                 {
@@ -80,7 +81,7 @@ def create_frame_extraction_job(input_bucket, input_key, output_bucket, region='
                         }
                     }]
                 },
-                # Required Video Output Group
+                # Video Output Group
                 {
                     "Name": "Video Output",
                     "OutputGroupSettings": {
@@ -108,31 +109,31 @@ def create_frame_extraction_job(input_bucket, input_key, output_bucket, region='
                                     "QualityTuningLevel": "SINGLE_PASS",
                                     "QvbrSettings": {
                                         "QvbrQualityLevel": 7
-                                    }
+                                    },
+                                    "FramerateControl": "SPECIFIED",
+                                    "FramerateNumerator": 30,
+                                    "FramerateDenominator": 1
                                 }
                             },
-                            "Width": 1920,
-                            "Height": 1080
-                        },
-                        "AudioDescriptions": [{
-                            "AudioSourceName": "Audio Selector 1",
-                            "CodecSettings": {
-                                "Codec": "AAC",
-                                "AacSettings": {
-                                    "Bitrate": 96000,
-                                    "CodingMode": "CODING_MODE_2_0",
-                                    "SampleRate": 48000
-                                }
-                            }
-                        }]
+                            "Width": 640,
+                            "Height": 480
+                        }
                     }]
                 }
             ]
         }
-                
+        
         job = mediaconvert.create_job(
-            Role=create_mediaconvert_role(),  # 使用从 create_mediaconvert_role() 获取的角色 ARN
-            Settings=job_settings
+            Role=create_mediaconvert_role(),
+            Settings=job_settings,
+            Queue="arn:aws:mediaconvert:us-west-2:955643200499:queues/Default",
+            UserMetadata={},
+            BillingTagsSource="JOB",
+            AccelerationSettings={
+                "Mode": "DISABLED"
+            },
+            StatusUpdateInterval="SECONDS_60",
+            Priority=0
         )
         return job['Job']['Id']
         
